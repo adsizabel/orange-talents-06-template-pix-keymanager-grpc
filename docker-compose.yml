@@ -8,3 +8,23 @@ services:
         image: "public.ecr.aws/d8b2x5c9/orange-stack-sat-itau-erp"
         ports: 
             - 9091:9091
+    postgres:
+        container_name: postgres_key_manager_service
+        image: postgres
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-postgres}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+            POSTGRES_DB: ${POSTGRES_DB:-gerenciador_chave_pix}
+        volumes:
+            - postgres:/data/postgres
+        ports:
+            - "5433:5432"
+        networks:
+            - postgres
+        restart: unless-stopped
+
+networks:
+    postgres:
+
+volumes:
+    postgres:

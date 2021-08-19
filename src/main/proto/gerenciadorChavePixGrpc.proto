@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.com.zup.ot6.izabel";
+option java_outer_classname = "GerenciadorChavePixGrpc";
+option objc_class_prefix = "HLW";
+
+package br.com.zup.ot6.izabel;
+
+service GerenciadorChavePixGrpcService {
+
+  rpc cadastrarChavePix(CadastrarChavePixRequest) returns (CadastrarChavePixResponse){}
+}
+
+enum TipoChavePix{
+  CHAVE_DESCONHECIDA = 0;
+  CPF = 1;
+  EMAIL = 2;
+  TELEFONE = 3;
+  CHAVE_ALEATORIA = 4;
+}
+
+enum TipoConta{
+  TIPO_DESCONHECIDO = 0;
+  CONTA_CORRENTE = 1;
+  CONTA_POUPANCA = 2;
+}
+
+message CadastrarChavePixRequest{
+  string idCliente = 1;
+  TipoChavePix tipoChavePix = 2;
+  string chavePix = 3;
+  TipoConta tipoConta = 4;
+}
+
+message CadastrarChavePixResponse{
+  string idChavePix = 1;
+  string idCliente = 2;
+}
