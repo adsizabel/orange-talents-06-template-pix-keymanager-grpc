@@ -10,6 +10,7 @@ package br.com.zup.ot6.izabel;
 service GerenciadorChavePixGrpcService {
 
   rpc cadastrarChavePix(CadastrarChavePixRequest) returns (CadastrarChavePixResponse){}
+  rpc removerChavePix(RemoverChavePixRequest) returns (RemoverChavePixResponse){}
 }
 
 enum TipoChavePix{
@@ -36,4 +37,14 @@ message CadastrarChavePixRequest{
 message CadastrarChavePixResponse{
   string idChavePix = 1;
   string idCliente = 2;
+}
+
+message RemoverChavePixRequest{
+  string pixId = 1;
+  string clienteId = 2;
+}
+
+message RemoverChavePixResponse{
+  string pixId = 1;
+  string clienteId = 2;
 }

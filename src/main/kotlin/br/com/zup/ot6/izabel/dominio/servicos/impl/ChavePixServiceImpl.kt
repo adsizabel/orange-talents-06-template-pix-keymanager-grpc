@@ -7,11 +7,10 @@ import br.com.zup.ot6.izabel.aplicacao.integracoes.IntegracaoERP
 import br.com.zup.ot6.izabel.dominio.entidades.ChavePix
 import br.com.zup.ot6.izabel.dominio.repositorios.ChavePixRepositorio
 import br.com.zup.ot6.izabel.dominio.servicos.ChavePixService
-import com.google.api.Http
 import io.micronaut.http.HttpStatus
 import io.micronaut.validation.Validated
 import org.slf4j.LoggerFactory
-import java.lang.IllegalStateException
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.transaction.Transactional
@@ -41,6 +40,18 @@ class ChavePixServiceImpl(
         val chavePix: ChavePix = chavePixDTO.converterParaEntidade()
 
         return repositorioChavePix.save(chavePix)
+
+    }
+
+    @Transactional
+    override fun removerChavePix(clienteId: String, pixId: String) {
+        val uuidPixId = UUID.fromString(pixId)
+        val uuidClienteID = UUID.fromString(clienteId)
+
+        val chave = repositorioChavePix.findByIdAndClienteId(uuidPixId, uuidClienteID)
+        if (!chave.isPresent ){throw ClienteNaoEncontradoExcecao("Cliente não existe.")}
+
+        repositorioChavePix.deleteById(uuidPixId)
 
     }
 

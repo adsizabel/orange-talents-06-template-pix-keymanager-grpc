@@ -6,5 +6,6 @@ import br.com.zup.ot6.izabel.dominio.entidades.ChavePix
 interface ChavePixService {
 
     fun cadastrarChavePix(cadastrarChavePixDTO: CadastrarChavePixDTO): ChavePix
+    fun removerChavePix(clienteId: String, pixId: String)
 
 }

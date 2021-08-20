@@ -1,17 +1,13 @@
 package br.com.zup.ot6.izabel.aplicacao.endpoints
 
-import br.com.zup.ot6.izabel.CadastrarChavePixRequest
-import br.com.zup.ot6.izabel.CadastrarChavePixResponse
-import br.com.zup.ot6.izabel.GerenciadorChavePixGrpcServiceGrpc
-import br.com.zup.ot6.izabel.aplicacao.excecoes.CampoInvalidoExcecao
+import br.com.zup.ot6.izabel.*
 import br.com.zup.ot6.izabel.aplicacao.excecoes.ChaveExistenteExcecao
 import br.com.zup.ot6.izabel.aplicacao.excecoes.ClienteNaoEncontradoExcecao
 import br.com.zup.ot6.izabel.aplicacao.extensoes.paraDTO
 import br.com.zup.ot6.izabel.dominio.servicos.ChavePixService
 import io.grpc.Status
+import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
-import java.lang.Exception
-import java.lang.RuntimeException
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.validation.ConstraintViolationException
@@ -30,47 +26,45 @@ class GerenciadorChaveEndpoint(@Inject val chavePixService: ChavePixService): Ge
 
             responseObserver.onNext(
                 CadastrarChavePixResponse.newBuilder()
-                    .setIdChavePix(chaveCriada.chavePix.toString())
+                    .setIdChavePix(chaveCriada.id.toString())
                     .setIdCliente(chaveCriada.clienteId.toString())
                     .build()
             )
             responseObserver.onCompleted()
 
-        } catch (e: CampoInvalidoExcecao) {
-            responseObserver.onError(
-                Status.INVALID_ARGUMENT
-                    .withDescription(e.message)
-                    .withCause(e.cause)
-                    .asRuntimeException()
-            )
-        } catch (e: ClienteNaoEncontradoExcecao) {
-            responseObserver.onError(
-                Status.NOT_FOUND
-                    .withDescription(e.message)
-                    .withCause(e.cause)
-                    .asRuntimeException()
-            )
-        } catch (e: ChaveExistenteExcecao) {
-            responseObserver.onError(
-                Status.ALREADY_EXISTS
-                    .withDescription(e.message)
-                    .withCause(e.cause)
-                    .asRuntimeException()
-            )
-        } catch (e: ConstraintViolationException) {
-            responseObserver.onError(
-                Status.INVALID_ARGUMENT
-                    .withDescription(e.message)
-                    .withCause(e.cause)
-                    .asRuntimeException()
-            )
         } catch (e: Throwable) {
-            responseObserver.onError(
-                Status.INTERNAL
-                    .withDescription(e.message)
-                    .withCause(e.cause)
-                    .asRuntimeException()
-            )
+            responseObserver.onError(tratarErros(e))
         }
+    }
+
+    override fun removerChavePix(
+        request: RemoverChavePixRequest,
+        responseObserver: StreamObserver<RemoverChavePixResponse>
+    ) {
+        try {
+            chavePixService.removerChavePix(clienteId = request.clienteId, pixId = request.pixId)
+
+            responseObserver.onNext(
+                RemoverChavePixResponse.newBuilder()
+                    .setClienteId(request.clienteId)
+                    .setPixId(request.pixId)
+                    .build()
+            )
+            responseObserver.onCompleted()
+        } catch (e: Throwable) {
+            responseObserver.onError(tratarErros(e))
+    }
+}
+    private fun tratarErros(excecao: Throwable): StatusRuntimeException {
+        return when(excecao){
+            is ClienteNaoEncontradoExcecao -> obterStatusRuntimeException(Status.NOT_FOUND, excecao)
+            is ChaveExistenteExcecao -> obterStatusRuntimeException(Status.ALREADY_EXISTS, excecao)
+            is IllegalArgumentException -> obterStatusRuntimeException(Status.INVALID_ARGUMENT, excecao)
+            else -> obterStatusRuntimeException(Status.INTERNAL, excecao)
+        }
+    }
+
+    private fun obterStatusRuntimeException(status: Status, excecao: Throwable): StatusRuntimeException {
+        return status.withDescription(excecao.message).withCause(excecao.cause).asRuntimeException()
     }
 }

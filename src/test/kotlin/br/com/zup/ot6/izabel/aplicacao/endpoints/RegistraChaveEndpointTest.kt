@@ -61,13 +61,10 @@ internal class RegistraChaveEndpointTest(
             .thenReturn(HttpResponse.ok(obterDadosContaClienteItauResponse()))
 
         //acao
-        val response = grpcClient.cadastrarChavePix(
-            CadastrarChavePixRequest.newBuilder()
-            .setIdCliente(CLIENTE_ID.toString())
-            .setTipoChavePix(TipoChavePix.EMAIL)
-            .setChavePix("izabelsilva@gmail.com")
-            .setTipoConta(TipoConta.CONTA_CORRENTE)
-            .build())
+        val response = grpcClient.cadastrarChavePix(obterObjetoCadastrarChavePixRequest(
+            TipoChavePix.EMAIL,
+            "izabel@zup.com.br",
+            TipoConta.CONTA_CORRENTE))
 
         //assertivas
         with(response){
@@ -88,14 +85,11 @@ internal class RegistraChaveEndpointTest(
         ))
 
         val thrown = assertThrows<StatusRuntimeException> {
-            grpcClient.cadastrarChavePix(CadastrarChavePixRequest.newBuilder()
-                .setIdCliente(CLIENTE_ID.toString())
-                .setTipoChavePix(TipoChavePix.CPF)
-                .setChavePix("01443493023")
-                .setTipoConta(TipoConta.CONTA_CORRENTE)
-                .build())
+            grpcClient.cadastrarChavePix(obterObjetoCadastrarChavePixRequest(
+                TipoChavePix.CPF,
+                "01443493023",
+                TipoConta.CONTA_CORRENTE))
         }
-
         with(thrown){
             assertEquals(Status.ALREADY_EXISTS.code, status.code)
             assertEquals("Chave Pix já existe.", status.description)
@@ -104,19 +98,15 @@ internal class RegistraChaveEndpointTest(
 
     @Test
     fun `nao deve cadastrar chave pix quando nao encontar dados da conta do cliente`() {
-
         `when`(itauClient.buscaContasPorTipo(clienteId = CLIENTE_ID.toString(), tipo = "CONTA_CORRENTE"))
             .thenReturn(HttpResponse.notFound())
 
         val thrown = assertThrows<StatusRuntimeException> {
-            grpcClient.cadastrarChavePix(CadastrarChavePixRequest.newBuilder()
-                .setIdCliente(CLIENTE_ID.toString())
-                .setTipoChavePix(TipoChavePix.CPF)
-                .setChavePix("01443493023")
-                .setTipoConta(TipoConta.CONTA_CORRENTE)
-                .build())
+            grpcClient.cadastrarChavePix(obterObjetoCadastrarChavePixRequest(
+                TipoChavePix.CPF,
+                "01443493023",
+                TipoConta.CONTA_CORRENTE))
         }
-
         with(thrown){
             assertEquals(Status.NOT_FOUND.code, status.code)
             assertEquals("Cliente não encontrado.", status.description)
@@ -128,10 +118,62 @@ internal class RegistraChaveEndpointTest(
         val thrown = assertThrows<StatusRuntimeException> {
             grpcClient.cadastrarChavePix(CadastrarChavePixRequest.newBuilder().build())
         }
-
         with(thrown){
             assertEquals(Status.INTERNAL.code, status.code)
             //assertEquals("Dad")
+        }
+    }
+
+    @Test
+    fun `nao deve cadastrar quando chave pix cpf for invalido`() {
+        val thrown = assertThrows<StatusRuntimeException> {
+            grpcClient.cadastrarChavePix(obterObjetoCadastrarChavePixRequest(
+                TipoChavePix.CPF,
+                "0000000000",
+                TipoConta.CONTA_CORRENTE))
+        }
+        with(thrown){
+            assertEquals(Status.INVALID_ARGUMENT.code, status.code)
+        }
+    }
+
+    @Test
+    fun `nao deve cadastrar quando chave pix email for invalido`() {
+        val thrown = assertThrows<StatusRuntimeException> {
+            grpcClient.cadastrarChavePix(obterObjetoCadastrarChavePixRequest(
+                TipoChavePix.EMAIL,
+                "izabel.zup.com.br",
+                TipoConta.CONTA_CORRENTE))
+        }
+        with(thrown){
+            assertEquals(Status.INVALID_ARGUMENT.code, status.code)
+        }
+
+    }
+
+    @Test
+    fun `nao deve cadastrar quando chave pix telefone for invalido`() {
+        val thrown = assertThrows<StatusRuntimeException> {
+            grpcClient.cadastrarChavePix(obterObjetoCadastrarChavePixRequest(
+                TipoChavePix.TELEFONE,
+                "5583996555555",
+                TipoConta.CONTA_CORRENTE))
+        }
+        with(thrown){
+            assertEquals(Status.INVALID_ARGUMENT.code, status.code)
+        }
+    }
+
+    @Test
+    fun `nao deve cadastrar quando chave pix aleatoria for invalida`() {
+        val thrown = assertThrows<StatusRuntimeException> {
+            grpcClient.cadastrarChavePix(obterObjetoCadastrarChavePixRequest(
+                TipoChavePix.CHAVE_ALEATORIA,
+                "123abc123abc123",
+                TipoConta.CONTA_CORRENTE))
+        }
+        with(thrown){
+            assertEquals(Status.INVALID_ARGUMENT.code, status.code)
         }
     }
 
@@ -144,6 +186,20 @@ internal class RegistraChaveEndpointTest(
            titular = TitularResponse(id = CLIENTE_ID , nome = "Izabel Silva", cpf = "50904669041"),
        )
    }
+
+    fun obterObjetoCadastrarChavePixRequest(
+        tipoChavePix: TipoChavePix,
+        chavePix: String,
+        tipoConta: TipoConta
+    ):CadastrarChavePixRequest{
+
+        return CadastrarChavePixRequest.newBuilder()
+            .setIdCliente(CLIENTE_ID.toString())
+            .setTipoChavePix(tipoChavePix)
+            .setChavePix(chavePix)
+            .setTipoConta(tipoConta)
+            .build()
+    }
 
     @Factory
     class Clients{
