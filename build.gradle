@@ -31,26 +31,23 @@ dependencies {
     implementation("javax.annotation:javax.annotation-api")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
-    runtimeOnly("ch.qos.logback:logback-classic")
     implementation("io.micronaut:micronaut-validation")
 
-
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
-
-    testImplementation("io.micronaut:micronaut-http-client")
+    runtimeOnly("ch.qos.logback:logback-classic")
 
     //JPA
-    runtime("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
     implementation("io.micronaut.sql:micronaut-hibernate-jpa")
     implementation("org.postgresql:postgresql:42.2.18")
 
     // Testes
     testImplementation("org.mockito:mockito-core:3.8.0")
-
+    testImplementation("com.h2database:h2")
+    testImplementation("io.micronaut:micronaut-http-client")
 
 }
-
 
 application {
     mainClass.set("br.com.zup.ot6.izabel.ApplicationKt")
@@ -70,7 +67,6 @@ tasks {
             jvmTarget = "11"
         }
     }
-
 
 }
 sourceSets {

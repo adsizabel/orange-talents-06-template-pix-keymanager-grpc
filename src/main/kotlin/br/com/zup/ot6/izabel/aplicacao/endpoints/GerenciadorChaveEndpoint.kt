@@ -14,6 +14,7 @@ import java.lang.Exception
 import java.lang.RuntimeException
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.validation.ConstraintViolationException
 
 @Singleton
 class GerenciadorChaveEndpoint(@Inject val chavePixService: ChavePixService): GerenciadorChavePixGrpcServiceGrpc.GerenciadorChavePixGrpcServiceImplBase() {
@@ -23,50 +24,53 @@ class GerenciadorChaveEndpoint(@Inject val chavePixService: ChavePixService): Ge
         responseObserver: StreamObserver<CadastrarChavePixResponse>
     ) {
 
-    try {
+        try {
+            val novaChavePix = request.paraDTO()
+            val chaveCriada = chavePixService.cadastrarChavePix(novaChavePix)
 
-        val novaChavePix = request.paraDTO()
-        val chaveCriada = chavePixService.cadastrarChavePix(novaChavePix)
+            responseObserver.onNext(
+                CadastrarChavePixResponse.newBuilder()
+                    .setIdChavePix(chaveCriada.chavePix.toString())
+                    .setIdCliente(chaveCriada.clienteId.toString())
+                    .build()
+            )
+            responseObserver.onCompleted()
 
-        responseObserver.onNext(
-            CadastrarChavePixResponse.newBuilder()
-                .setIdChavePix(chaveCriada.chavePix.toString())
-                .setIdCliente(chaveCriada.clienteId.toString())
-                .build())
-
-        responseObserver.onCompleted()
-
-    } catch (e: CampoInvalidoExcecao){
-        responseObserver.onError(
-            Status.INVALID_ARGUMENT
-                .withDescription(e.message)
-                .withCause(e.cause)
-                .asRuntimeException()
-        )
-    } catch (e: ClienteNaoEncontradoExcecao){
-        responseObserver.onError(
-            Status.NOT_FOUND
-                .withDescription(e.message)
-                .withCause(e.cause)
-                .asRuntimeException()
-        )
-    } catch (e: ChaveExistenteExcecao){
-        responseObserver.onError(
-            Status.ALREADY_EXISTS
-                .withDescription(e.message)
-                .withCause(e.cause)
-                .asRuntimeException()
-        )
-    } catch (e: Throwable){
-        responseObserver.onError(
-            Status.INTERNAL
-                .withDescription(e.message)
-                .withCause(e.cause)
-                .asRuntimeException()
-        )
-    }
-
-
-
+        } catch (e: CampoInvalidoExcecao) {
+            responseObserver.onError(
+                Status.INVALID_ARGUMENT
+                    .withDescription(e.message)
+                    .withCause(e.cause)
+                    .asRuntimeException()
+            )
+        } catch (e: ClienteNaoEncontradoExcecao) {
+            responseObserver.onError(
+                Status.NOT_FOUND
+                    .withDescription(e.message)
+                    .withCause(e.cause)
+                    .asRuntimeException()
+            )
+        } catch (e: ChaveExistenteExcecao) {
+            responseObserver.onError(
+                Status.ALREADY_EXISTS
+                    .withDescription(e.message)
+                    .withCause(e.cause)
+                    .asRuntimeException()
+            )
+        } catch (e: ConstraintViolationException) {
+            responseObserver.onError(
+                Status.INVALID_ARGUMENT
+                    .withDescription(e.message)
+                    .withCause(e.cause)
+                    .asRuntimeException()
+            )
+        } catch (e: Throwable) {
+            responseObserver.onError(
+                Status.INTERNAL
+                    .withDescription(e.message)
+                    .withCause(e.cause)
+                    .asRuntimeException()
+            )
+        }
     }
 }
