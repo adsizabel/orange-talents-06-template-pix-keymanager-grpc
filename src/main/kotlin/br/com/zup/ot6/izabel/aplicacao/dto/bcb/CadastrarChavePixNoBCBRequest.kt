@@ -5,8 +5,8 @@ import br.com.zup.ot6.izabel.aplicacao.dto.pix.CadastrarChavePixDTO
 import br.com.zup.ot6.izabel.dominio.enums.BCBTipoChave
 import br.com.zup.ot6.izabel.dominio.enums.BCBTipoConta
 import br.com.zup.ot6.izabel.dominio.enums.BCBTipoPessoa
-import br.com.zup.ot6.izabel.dominio.enums.TipoChaveValidador
 import com.fasterxml.jackson.annotation.JsonProperty
+
 
 data class CadastrarChavePixNoBCBRequest(
     @JsonProperty(value = "keyType")

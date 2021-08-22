@@ -45,10 +45,12 @@ class ChavePixServiceImpl(
 
         val bcbRequest = CadastrarChavePixNoBCBRequest.criarChave(chavePixDTO, responseDadosDaConta.body())
 
+        logger.info("Cadastrando chave Pix no Banco Central do Brasil - BCB")
         val bcbResponse = integracaoBCB.cadastrarChaveNoBCB(bcbRequest)
 
         if (bcbResponse.status != HttpStatus.CREATED) throw  IllegalArgumentException("Erro ao registrar chave Pix no Banco Central")
 
+        logger.info("Cadastro com sucesso de chave Pix no Banco Central do Brasil - BCB")
         return repositorioChavePix.update(chavePix)
     }
 
@@ -57,6 +59,8 @@ class ChavePixServiceImpl(
         val uuidPixId = UUID.fromString(pixId)
         val uuidClienteID = UUID.fromString(clienteId)
 
+        logger.info("Início da remoção da chave Pix.")
+
         val chave = repositorioChavePix.findByIdAndClienteId(uuidPixId, uuidClienteID)
         if (!chave.isPresent ){throw ClienteNaoEncontradoExcecao("Cliente não existe.")}
 
@@ -64,9 +68,11 @@ class ChavePixServiceImpl(
 
         val bcbRequest = RemoverChavePixDoBCBRequest(chavePix = chave.get().chavePix)
 
+        logger.info("Aguardando remoção da chave Pix - Banco Central do Brsil BCB.")
         val bcbResponse = integracaoBCB.removerChavePixDoBCB(chave.get().chavePix, bcbRequest)
-
         if (bcbResponse.status != HttpStatus.OK){ throw IllegalArgumentException("Erro ao remover chave Pix no Banco Central do Brasil (BCB)")}
+
+        logger.info("Chave Pix removidada com sucesso.")
     }
 
 }
