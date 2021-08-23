@@ -131,7 +131,7 @@ internal class RegistraChaveEndpointTest(
         }
         with(thrown){
             assertEquals(Status.NOT_FOUND.code, status.code)
-            assertEquals("Cliente não encontrado.", status.description)
+            assertEquals("Não foi possivel encontrar um cliente valido para o ID ${CLIENTE_ID}.", status.description)
         }
     }
 

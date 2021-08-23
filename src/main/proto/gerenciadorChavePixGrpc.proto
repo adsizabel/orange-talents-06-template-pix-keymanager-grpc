@@ -7,10 +7,15 @@ option objc_class_prefix = "HLW";
 
 package br.com.zup.ot6.izabel;
 
+import "google/protobuf/timestamp.proto";
+
 service GerenciadorChavePixGrpcService {
 
   rpc cadastrarChavePix(CadastrarChavePixRequest) returns (CadastrarChavePixResponse){}
   rpc removerChavePix(RemoverChavePixRequest) returns (RemoverChavePixResponse){}
+  rpc carregarChavePix(CarregaChavePixRequest) returns (CarregaChavePixResponse){}
+  rpc listarChavePix(ListarChavePixRequest) returns (ListarChavePixResponse) {}
+
 }
 
 enum TipoChavePix{
@@ -47,4 +52,61 @@ message RemoverChavePixRequest{
 message RemoverChavePixResponse{
   string pixId = 1;
   string clienteId = 2;
+}
+
+message ContaBancariaResponse{
+  string nomeInstituicao = 1;
+  string agencia = 2;
+  string numero = 3;
+  string tipo = 4;
+}
+
+message ChavePixResponse{
+  string pixId = 1;
+  string clienteId = 2;
+  TipoChavePix tipoChave = 3;
+  string valorChave = 4;
+  TipoConta tipoConta = 5;
+  google.protobuf.Timestamp dataCriacao = 6;
+}
+
+message ListarChavePixRequest{
+  string clienteId = 1;
+}
+
+message ListarChavePixResponse{
+  repeated ChavePixResponse chavesPix = 1;
+}
+
+message CarregaChavePixRequest{
+  message FiltroPorPixId{
+    string clienteId = 1;
+    string pixId = 2;
+  }
+  oneof filtro{
+    FiltroPorPixId pixId = 1;
+    string chave = 2;
+  }
+}
+
+message CarregaChavePixResponse{
+  message ChavePix{
+    message ContaInfo{
+      TipoConta tipo = 1;
+      string instituicao = 2;
+      string titular = 3;
+      string cpf = 4;
+      string agencia = 5;
+      string numeroConta = 6;
+    }
+
+    TipoChavePix tipo = 1;
+    string chave = 2;
+    ContaInfo conta = 3;
+    google.protobuf.Timestamp criadaEm = 4;
+  }
+
+  string clienteId = 1;
+  string pixId = 2;
+  ChavePix chave = 3;
 }

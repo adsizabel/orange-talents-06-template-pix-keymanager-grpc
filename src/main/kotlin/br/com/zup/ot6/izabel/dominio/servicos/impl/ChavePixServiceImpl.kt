@@ -1,7 +1,9 @@
 package br.com.zup.ot6.izabel.dominio.servicos.impl
 
+import br.com.zup.ot6.izabel.TipoConta
 import br.com.zup.ot6.izabel.aplicacao.dto.bcb.CadastrarChavePixNoBCBRequest
 import br.com.zup.ot6.izabel.aplicacao.dto.bcb.RemoverChavePixDoBCBRequest
+import br.com.zup.ot6.izabel.aplicacao.dto.erp.DadosDaContaResponse
 import br.com.zup.ot6.izabel.aplicacao.dto.pix.CadastrarChavePixDTO
 import br.com.zup.ot6.izabel.aplicacao.excecoes.ChaveExistenteExcecao
 import br.com.zup.ot6.izabel.aplicacao.excecoes.ClienteNaoEncontradoExcecao
@@ -35,15 +37,13 @@ class ChavePixServiceImpl(
         logger.info("Verificando se a chave Pix ${chavePixDTO.chavePix} já existe.")
         if (repositorioChavePix.existsByChavePix(chavePixDTO.chavePix)) throw ChaveExistenteExcecao("Chave Pix já existe.")
 
-        val responseDadosDaConta = integracaoERP.buscaContasPorTipo(chavePixDTO.clienteId, chavePixDTO.tipoConta.name)
-        if(responseDadosDaConta.status != HttpStatus.OK ){
-            throw ClienteNaoEncontradoExcecao("Cliente não encontrado.")}
+        val responseDadosDaConta = getDadosContaCliente(chavePixDTO.clienteId, chavePixDTO.tipoConta)
 
         logger.info("Registrando chave Pix.")
         val chavePix: ChavePix = chavePixDTO.converterParaEntidade()
         repositorioChavePix.save(chavePix)
 
-        val bcbRequest = CadastrarChavePixNoBCBRequest.criarChave(chavePixDTO, responseDadosDaConta.body())
+        val bcbRequest = CadastrarChavePixNoBCBRequest.criarChave(chavePixDTO, responseDadosDaConta)
 
         logger.info("Cadastrando chave Pix no Banco Central do Brasil - BCB")
         val bcbResponse = integracaoBCB.cadastrarChaveNoBCB(bcbRequest)
@@ -62,17 +62,32 @@ class ChavePixServiceImpl(
         logger.info("Início da remoção da chave Pix.")
 
         val chave = repositorioChavePix.findByIdAndClienteId(uuidPixId, uuidClienteID)
-        if (!chave.isPresent ){throw ClienteNaoEncontradoExcecao("Cliente não existe.")}
+        if (!chave.isPresent ){throw ClienteNaoEncontradoExcecao("Não foi possivel encontrar um cliente valido para o ID ${uuidClienteID}.")}
 
         repositorioChavePix.deleteById(uuidPixId)
 
         val bcbRequest = RemoverChavePixDoBCBRequest(chavePix = chave.get().chavePix)
 
-        logger.info("Aguardando remoção da chave Pix - Banco Central do Brsil BCB.")
+        logger.info("Aguardando remoção da chave Pix - Banco Central do Brasil BCB.")
         val bcbResponse = integracaoBCB.removerChavePixDoBCB(chave.get().chavePix, bcbRequest)
         if (bcbResponse.status != HttpStatus.OK){ throw IllegalArgumentException("Erro ao remover chave Pix no Banco Central do Brasil (BCB)")}
 
-        logger.info("Chave Pix removidada com sucesso.")
+        logger.info("Chave Pix removida com sucesso.")
+    }
+
+    override fun listarChavePix(clienteId: String): List<ChavePix> {
+        return repositorioChavePix.findAllByClienteId(UUID.fromString(clienteId))
+    }
+
+    override fun getDadosContaCliente(codigoCliente: String, tipoConta: TipoConta): DadosDaContaResponse {
+        logger.info("Consultando conta do cliente: $codigoCliente no ERP Itau.")
+        val erpResponse = integracaoERP.buscaContasPorTipo(codigoCliente, tipoConta.name)
+
+        if(erpResponse.status != HttpStatus.OK) {
+            throw ClienteNaoEncontradoExcecao("Não foi possivel encontrar um cliente valido " +
+                    "para o ID $codigoCliente.")
+        }
+        return erpResponse.body()
     }
 
 }

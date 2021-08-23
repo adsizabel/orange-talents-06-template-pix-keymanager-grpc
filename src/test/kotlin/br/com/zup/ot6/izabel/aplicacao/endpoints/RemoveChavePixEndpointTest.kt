@@ -87,7 +87,7 @@ internal class RemoveChavePixEndpointTest(
         }
         with(thrown){
             assertEquals(Status.NOT_FOUND.code, status.code)
-            assertEquals("Cliente não existe.", status.description)
+            assertEquals("Não foi possivel encontrar um cliente valido para o ID ${OBJETO_SALVO.clienteId}.", status.description)
         }
     }
 
@@ -103,7 +103,7 @@ internal class RemoveChavePixEndpointTest(
         }
         with(thrown){
             assertEquals(Status.NOT_FOUND.code, status.code)
-            assertEquals("Cliente não existe.", status.description)
+            assertEquals("Não foi possivel encontrar um cliente valido para o ID ${outroClienteId.toString()}.", status.description)
         }
     }
 
